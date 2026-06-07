@@ -212,10 +212,28 @@ private class TomlElementClassEncoder(
 
     override fun endElement(descriptor: SerialDescriptor, index: Int) {
         val currentKey = currentKey
+        builder[currentKey] = element
+        // Record annotations only when the property actually carries some -- the
+        // common case is none, and storing an empty list for every property
+        // means a list concatenation and a map put per property. A missing key
+        // already means "no annotations" to the emitter (this is what the parser
+        // produces too), so skip both. Concatenate only when both sides are
+        // non-empty; otherwise the non-empty side is reused as-is.
         val propertyAnnotations = descriptor.getElementAnnotations(index)
         val intrinsicAnnotations = descriptor.getElementDescriptor(index).annotations
-        builder[currentKey] = element
-        annotations[currentKey] = propertyAnnotations + intrinsicAnnotations
+        when {
+            propertyAnnotations.isEmpty() -> {
+                if (intrinsicAnnotations.isNotEmpty()) {
+                    annotations[currentKey] = intrinsicAnnotations
+                }
+            }
+            intrinsicAnnotations.isEmpty() -> {
+                annotations[currentKey] = propertyAnnotations
+            }
+            else -> {
+                annotations[currentKey] = propertyAnnotations + intrinsicAnnotations
+            }
+        }
     }
 }
 

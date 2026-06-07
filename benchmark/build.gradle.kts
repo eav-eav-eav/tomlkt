@@ -1,41 +1,43 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
-    kotlin("jvm")
-    kotlin("plugin.serialization")
-    kotlin("plugin.allopen")
-    kotlin("kapt")
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.allopen)
+    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.kotlin.serialization)
 
-    id("me.champeau.jmh")
+    alias(libs.plugins.jmh)
 }
 
 dependencies {
-    jmh("org.openjdk.jmh:jmh-core:1.36")
-    kaptJmh("org.openjdk.jmh:jmh-generator-annprocess:1.36")
+    jmh(libs.jmh.core)
+    kaptJmh(libs.jmh.generator.annprocess)
 
     // tomlkt
     jmh(project(":core"))
-    // toml4j
-    jmh("com.moandjiezana.toml:toml4j:0.7.2")
+    jmh(libs.kotlinx.serialization.core)
     // ktoml
-    jmh("com.akuleshov7:ktoml-core:0.5.0")
+    jmh(libs.ktoml.core)
     // jackson
-    jmh("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.15.1")
-    jmh("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.1")
-    jmh("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.1")
+    jmh(libs.jackson.dataformat.toml)
+    jmh(libs.jackson.module.kotlin)
+    jmh(libs.jackson.datatype.jsr310)
     // night config
-    jmh("com.electronwill.night-config:toml:3.6.0")
+    jmh(libs.night.config.toml)
     // tomlj
-    jmh("org.tomlj:tomlj:1.1.0")
-
-    // official JSON
-    val serializationVersion: String by rootProject
-    jmh("org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationVersion")
+    jmh(libs.tomlj)
 }
 
 jmh {
-    includes.set(listOf("test.Benchmark"))
+    // Run both the decoding (test.DecodeBenchmark) and encoding
+    // (test.EncodeBenchmark) benchmarks. A single regex matching either class is
+    // used rather than a list: the jmh plugin intersects multiple include
+    // patterns, so listing both classes would match nothing.
+    includes.set(listOf("test\\..*Benchmark"))
+}
+
+// Always re-run the benchmark: its inputs rarely change, but cached results
+// from a different machine state (load, power profile) are misleading.
+tasks.named("jmh") {
+    outputs.upToDateWhen { false }
 }
 
 allOpen {
@@ -43,7 +45,5 @@ allOpen {
 }
 
 kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_17
-    }
+    jvmToolchain(17)
 }

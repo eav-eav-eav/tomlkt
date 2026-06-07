@@ -359,7 +359,6 @@ class NestTest {
     )
 
     val s51 = """
-        
         [[cs]]
         
         [cs.c]
@@ -385,7 +384,6 @@ class NestTest {
     )
 
     val s52 = """
-        
         [[cs]]
         c = null
     """.trimIndent()

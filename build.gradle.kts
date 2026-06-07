@@ -1,15 +1,16 @@
 plugins {
-    kotlin("multiplatform") apply false
-    kotlin("plugin.serialization") apply false
-    kotlin("plugin.allopen") apply false
-    kotlin("kapt") apply false
+    alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.kotlin.allopen) apply false
+    alias(libs.plugins.kotlin.kapt) apply false
 
-    id("org.jetbrains.dokka") apply false
+    alias(libs.plugins.dokka) apply false
 
-    id("io.gitlab.arturbosch.detekt") apply false
-    id("me.champeau.jmh") apply false
+    alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.jmh) apply false
 
-    id("com.vanniktech.maven.publish") apply false
+    alias(libs.plugins.maven.publish) apply false
 }
 
 allprojects {

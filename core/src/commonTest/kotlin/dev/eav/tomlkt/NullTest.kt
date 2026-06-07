@@ -101,7 +101,6 @@ class NullTest {
     )
 
     val s32 = """
-        
         [nc]
         i = -1
         
@@ -120,7 +119,6 @@ class NullTest {
     }
 
     val s33 = """
-        
         [c]
         i = 1
     """.trimIndent()

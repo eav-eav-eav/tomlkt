@@ -282,14 +282,14 @@ public fun TomlLiteral(string: String): TomlLiteral {
  * Creates a [TomlLiteral] from [localDateTime].
  */
 public fun TomlLiteral(localDateTime: NativeLocalDateTime): TomlLiteral {
-    return TomlLiteral(localDateTime.toString(), Type.LocalDateTime)
+    return TomlLiteral(localDateTime.toString().withSeconds(), Type.LocalDateTime)
 }
 
 /**
  * Creates a [TomlLiteral] from [offsetDateTime].
  */
 public fun TomlLiteral(offsetDateTime: NativeOffsetDateTime): TomlLiteral {
-    return TomlLiteral(offsetDateTime.toString(), Type.OffsetDateTime)
+    return TomlLiteral(offsetDateTime.toString().withSeconds(), Type.OffsetDateTime)
 }
 
 /**
@@ -303,7 +303,25 @@ public fun TomlLiteral(localDate: NativeLocalDate): TomlLiteral {
  * Creates a [TomlLiteral] from [localTime].
  */
 public fun TomlLiteral(localTime: NativeLocalTime): TomlLiteral {
-    return TomlLiteral(localTime.toString(), Type.LocalTime)
+    return TomlLiteral(localTime.toString().withSeconds(), Type.LocalTime)
+}
+
+// The native date-time types drop a ":00" seconds component when it is zero
+// (e.g. java.time renders 17:45:00 as "17:45"), but several TOML parsers --
+// including the toml-test reference -- require seconds to be present. Insert
+// ":00" right after the HH:MM minutes when no seconds follow, leaving any
+// fractional seconds, offset or "Z" suffix untouched.
+private fun String.withSeconds(): String {
+    val firstColon = indexOf(':')
+    if (firstColon < 0) {
+        return this
+    }
+    val afterMinute = firstColon + 3
+    val hasSeconds = afterMinute < length && this[afterMinute] == ':'
+    if (hasSeconds) {
+        return this
+    }
+    return substring(0, afterMinute) + ":00" + substring(afterMinute)
 }
 
 /**

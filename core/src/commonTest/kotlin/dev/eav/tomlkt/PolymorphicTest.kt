@@ -29,7 +29,6 @@ class PolymorphicTest {
     )
 
     val s11 = """
-        
         [b]
         type = "dev.eav.tomlkt.PolymorphicTest.S1"
         i = 0
@@ -87,7 +86,6 @@ class PolymorphicTest {
     )
 
     val s21 = """
-        
         [b]
         type = "dev.eav.tomlkt.PolymorphicTest.S2"
         i = 0
@@ -122,7 +120,6 @@ class PolymorphicTest {
     )
 
     val s31 = """
-        
         [b]
         type = "dev.eav.tomlkt.PolymorphicTest.O1"
     """.trimIndent()
@@ -167,7 +164,6 @@ class PolymorphicTest {
     )
 
     val s41 = """
-        
         [b]
         type = "dev.eav.tomlkt.PolymorphicTest.S3"
         i = -1
@@ -228,7 +224,6 @@ class PolymorphicTest {
     )
 
     val s51 = """
-        
         [b]
         type = "dev.eav.tomlkt.PolymorphicTest.S4"
         i = 1
@@ -271,7 +266,6 @@ class PolymorphicTest {
     )
 
     val s61 = """
-        
         [b]
         type = "dev.eav.tomlkt.PolymorphicTest.O2"
     """.trimIndent()
@@ -304,7 +298,6 @@ class PolymorphicTest {
     )
 
     val s71 = """
-        
         [b]
         type = "\n"
         i = 0
@@ -325,7 +318,6 @@ class PolymorphicTest {
     }
 
     val s72 = """
-        
         [b]
         class = "\n"
         i = 0
@@ -362,7 +354,6 @@ class PolymorphicTest {
     )
 
     val s81 = """
-        
         [b]
         t = "dev.eav.tomlkt.PolymorphicTest.S6"
         i = 0

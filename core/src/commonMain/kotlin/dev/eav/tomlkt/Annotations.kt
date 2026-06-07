@@ -43,10 +43,12 @@ import kotlinx.serialization.SerialInfo
  * ```
  *
  * @property text the comment text, could be multiline.
+ * @property inline whether the comment is placed on the same line, after the
+ * value (`key = value # text`), rather than on its own line above the entry.
  */
 @SerialInfo
 @Target(AnnotationTarget.PROPERTY)
-public annotation class TomlComment(val text: String)
+public annotation class TomlComment(val text: String, val inline: Boolean = false)
 
 /**
  * Forces the annotated array-like or table-like property to be a one-liner.

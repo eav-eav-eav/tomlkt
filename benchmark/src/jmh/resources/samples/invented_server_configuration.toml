@@ -1,0 +1,42 @@
+[production]
+[production.server-a]
+steps = [
+  "npm",
+  "bundle",
+  "audit"
+]
+[production.server-a.conf]
+ruby = true
+python = false
+clean = true
+[production.server-b]
+steps = [
+  "npm",
+  "bundle",
+  "audit"
+]
+[production.server-b.conf]
+ruby = true
+python = true
+clean = false
+[staging]
+[staging.server-a]
+steps = [
+  "npm",
+  "bundle",
+  "audit"
+]
+[staging.server-a.conf]
+ruby = true
+python = false
+clean = true
+[staging.server-b]
+steps = [
+  "npm",
+  "bundle",
+  "audit"
+]
+[staging.server-b.conf]
+ruby = true
+python = true
+clean = false

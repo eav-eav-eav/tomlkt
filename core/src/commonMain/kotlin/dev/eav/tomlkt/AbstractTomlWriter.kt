@@ -29,8 +29,8 @@ import dev.eav.tomlkt.internal.StartArray
 import dev.eav.tomlkt.internal.StartInlineTable
 import dev.eav.tomlkt.internal.StartTableHead
 import dev.eav.tomlkt.internal.doubleQuoted
-import dev.eav.tomlkt.internal.doubleQuotedIfNotPure
 import dev.eav.tomlkt.internal.escape
+import dev.eav.tomlkt.internal.isBareKey
 import dev.eav.tomlkt.internal.processIntegerString
 import dev.eav.tomlkt.internal.singleQuoted
 import dev.eav.tomlkt.internal.toStringModified
@@ -50,7 +50,14 @@ public abstract class AbstractTomlWriter : TomlWriter {
     // -------- Key --------
 
     final override fun writeKey(key: String) {
-        writeString(key.escape().doubleQuotedIfNotPure())
+        // A bare key needs neither escaping nor quoting, so skip both. This is
+        // the common case; only keys with non-bare characters pay for the
+        // StringBuilder in escape() and the surrounding quotes.
+        if (key.isBareKey()) {
+            writeString(key)
+        } else {
+            writeString(key.escape().doubleQuoted)
+        }
     }
 
     final override fun writeKeySeparator() {

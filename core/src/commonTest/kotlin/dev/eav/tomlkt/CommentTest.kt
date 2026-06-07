@@ -85,9 +85,7 @@ class CommentTest {
     )
 
     val s31 = """
-        
         # test
-        
         [c]
         f = 1.1
     """.trimIndent()
@@ -127,9 +125,7 @@ class CommentTest {
     )
 
     val s41 = """
-        
         # test
-        
         [[cs]]
         f = 1.1
     """.trimIndent()
@@ -166,7 +162,6 @@ class CommentTest {
     )
 
     val s51 = """
-        
         [m1]
         # single
         i = -1
@@ -196,7 +191,6 @@ class CommentTest {
     )
 
     val s61 = """
-        
         [[m1s]]
         # single
         i = 0
@@ -262,7 +256,6 @@ class CommentTest {
         i = 0
         
         # another
-        
         [c]
         f = 0.1
     """.trimIndent()
@@ -301,7 +294,6 @@ class CommentTest {
         i = 0
         
         # another
-        
         [m1]
         # single
         i = 0
@@ -351,7 +343,6 @@ class CommentTest {
         i = 0
         
         # blocked
-        
         [m1]
         # single
         i = 0
@@ -420,14 +411,12 @@ class CommentTest {
         # oh
         # my
         # god
-
         [m1]
         # single
         i = 1
 
         # this is
         # my life
-
         [[m1s]]
         # single
         i = 0

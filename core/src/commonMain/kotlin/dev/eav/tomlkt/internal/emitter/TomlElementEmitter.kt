@@ -397,6 +397,21 @@ private class TomlTableEmitter(
     // We delay the emission of comments.
     private var comment: TomlComment? = null
 
+    // An inline comment is emitted after the value, on the same line.
+    private var inlineComment: TomlComment? = null
+
+    // Sub-tables, arrays-of-tables and the comments attached to them are
+    // collected during the entry pass and emitted after every normal key-value
+    // entry. Each emitter instance emits a single table, so these double as the
+    // per-table accumulators. They are allocated lazily on the first insert, so
+    // a leaf table with only scalar entries -- the common case -- never creates
+    // them, and a non-null map is therefore always non-empty.
+    private var tables: MutableMap<String, TomlTable>? = null
+
+    private var arrayOfTables: MutableMap<String, TomlArray>? = null
+
+    private var remainingComments: MutableMap<String, TomlComment>? = null
+
     // Array of table is handled separately.
     override fun createArrayEmitter(array: TomlArray): AbstractTomlElementEmitter {
         return if (!isInline && array.isNotEmpty()) {
@@ -416,9 +431,6 @@ private class TomlTableEmitter(
         // Emit structure.
         val explicitNulls = toml.config.explicitNulls
         val annotations = table.annotations
-        val remainingComments = mutableMapOf<String, TomlComment>()
-        val tables = mutableMapOf<String, TomlTable>()
-        val arrayOfTables = mutableMapOf<String, TomlArray>()
         var hasNormalEntry = false
         // Emit all the normal key-value entries, record tables and array of tables.
         table.entries.forEachIndexed loop@{ _, (key, element) ->
@@ -434,13 +446,11 @@ private class TomlTableEmitter(
             val emitted = tryEmitEntry(
                 key = key,
                 element = element,
-                remainingComments = remainingComments,
-                tables = tables,
-                arrayOfTables = arrayOfTables,
                 hasNormalEntry = hasNormalEntry
             )
             // End element.
             comment = null
+            inlineComment = null
             isInline = false
             blockArray = null
             isStringMultiline = false
@@ -450,19 +460,25 @@ private class TomlTableEmitter(
                 hasNormalEntry = emitted
             }
         }
-        // Emit tables.
-        if (tables.isNotEmpty()) {
+        // Emit tables. A non-null map was created on the first insert, so it is
+        // never empty here.
+        val tables = tables
+        if (tables != null) {
             if (hasNormalEntry) {
                 writer.writeLineFeed()
             }
-            emitInnerTables(remainingComments, tables)
+            emitInnerTables(tables, hasNormalEntry || path.isNotEmpty())
         }
         // Emit array of tables.
-        if (arrayOfTables.isNotEmpty()) {
-            if (hasNormalEntry || tables.isNotEmpty()) {
+        val arrayOfTables = arrayOfTables
+        if (arrayOfTables != null) {
+            if (hasNormalEntry || tables != null) {
                 writer.writeLineFeed()
             }
-            emitInnerArrayOfTables(remainingComments, arrayOfTables)
+            emitInnerArrayOfTables(
+                arrayOfTables,
+                hasNormalEntry || tables != null || path.isNotEmpty()
+            )
         }
     }
 
@@ -470,7 +486,11 @@ private class TomlTableEmitter(
         for (annotation in annotations) {
             when (annotation) {
                 is TomlComment -> {
-                    comment = annotation
+                    if (annotation.inline) {
+                        inlineComment = annotation
+                    } else {
+                        comment = annotation
+                    }
                 }
                 is TomlInline -> {
                     isInline = true
@@ -504,9 +524,6 @@ private class TomlTableEmitter(
     private fun tryEmitEntry(
         key: String,
         element: TomlElement,
-        remainingComments: MutableMap<String, TomlComment>,
-        tables: MutableMap<String, TomlTable>,
-        arrayOfTables: MutableMap<String, TomlArray>,
         hasNormalEntry: Boolean
     ): Boolean {
         val comment = comment
@@ -519,9 +536,11 @@ private class TomlTableEmitter(
                         element.all { it is TomlTable } &&
                         element.annotations.flatten().none { it is TomlInline }
                 if (shouldStructure) {
+                    val arrayOfTables = arrayOfTables
+                        ?: mutableMapOf<String, TomlArray>().also { arrayOfTables = it }
                     arrayOfTables[key] = element
                     if (comment != null) {
-                        remainingComments[key] = comment
+                        deferComment(key, comment)
                     }
                     return false
                 }
@@ -529,9 +548,11 @@ private class TomlTableEmitter(
             is TomlTable -> {
                 val shouldStructure = !isInline && element.isNotEmpty()
                 if (shouldStructure) {
+                    val tables = tables
+                        ?: mutableMapOf<String, TomlTable>().also { tables = it }
                     tables[key] = element
                     if (comment != null) {
-                        remainingComments[key] = comment
+                        deferComment(key, comment)
                     }
                     return false
                 }
@@ -547,25 +568,41 @@ private class TomlTableEmitter(
         }
         writer.startEntry(key)
         emitElement(element)
+        inlineComment?.let { emitInlineComment(it) }
         return true
     }
 
+    private fun emitInlineComment(comment: TomlComment) {
+        writer.writeSpace()
+        writer.startComment()
+        writer.writeSpace()
+        writer.writeString(comment.text.escape())
+    }
+
+    // Records the comment of a deferred sub-table or array-of-tables, creating
+    // the map on first use so a table without such comments never allocates it.
+    private fun deferComment(key: String, comment: TomlComment) {
+        val remainingComments = remainingComments
+            ?: mutableMapOf<String, TomlComment>().also { remainingComments = it }
+        remainingComments[key] = comment
+    }
+
     private fun emitInnerTables(
-        remainingComments: Map<String, TomlComment>,
-        tables: Map<String, TomlTable>
+        tables: Map<String, TomlTable>,
+        precededByContent: Boolean
     ) {
         val path = path
+        val remainingComments = remainingComments
         val lastIndex = tables.size - 1
         tables.entries.forEachIndexed { index, (key, table) ->
-            // Begin element.
-            val comment = remainingComments[key]
-            if (comment != null) {
-                writer.writeLineFeed()
-                emitComment(comment)
-            }
-            // Emit entry.
+            // Begin element: a blank line separates this table from preceding
+            // content, then its comment (if any) sits directly above the head.
+            // The first head has no separator when it opens the document.
             val innerPath = path + key
-            writer.writeLineFeed()
+            if (index > 0 || precededByContent) {
+                writer.writeLineFeed()
+            }
+            remainingComments?.get(key)?.let { emitComment(it) }
             writer.writeRegularTableHead(innerPath)
             writer.writeLineFeed()
             TomlTableEmitter(this, innerPath).emitTable(table)
@@ -577,21 +614,22 @@ private class TomlTableEmitter(
     }
 
     private fun emitInnerArrayOfTables(
-        remainingComments: Map<String, TomlComment>,
-        arrayOfTables: Map<String, TomlArray>
+        arrayOfTables: Map<String, TomlArray>,
+        precededByContent: Boolean
     ) {
         val path = path
+        val remainingComments = remainingComments
         val lastIndex = arrayOfTables.size - 1
         arrayOfTables.entries.forEachIndexed { index, (key, array) ->
-            // Begin element.
-            val comment = remainingComments[key]
-            if (comment != null) {
-                writer.writeLineFeed()
-                emitComment(comment)
-            }
-            // Emit entry (no key needed).
+            // Begin element: a blank line separates this block from preceding
+            // content, then its comment (if any) sits directly above the head.
+            // The first head has no separator when it opens the document.
             val innerPath = path + key
-            TomlArrayOfTableEmitter(this, innerPath).emitArray(array)
+            if (index > 0 || precededByContent) {
+                writer.writeLineFeed()
+            }
+            remainingComments?.get(key)?.let { emitComment(it) }
+            TomlArrayOfTableEmitter(this, innerPath, suppressFirstLineFeed = true).emitArray(array)
             // End element.
             if (index < lastIndex) {
                 writer.writeLineFeed()
@@ -604,7 +642,8 @@ private class TomlTableEmitter(
 
 private class TomlArrayOfTableEmitter(
     delegate: AbstractTomlElementEmitter,
-    private val path: Path
+    private val path: Path,
+    private val suppressFirstLineFeed: Boolean = false
 ) : AbstractTomlElementEmitter(delegate.toml, delegate.writer) {
     override fun createTableEmitter(table: TomlTable): AbstractTomlElementEmitter {
         return TomlTableEmitter(this, path)
@@ -621,7 +660,11 @@ private class TomlArrayOfTableEmitter(
             if (elementAnnotations != null) {
                 processAnnotations(elementAnnotations)
             }
-            writer.writeLineFeed()
+            // The first head's separator is written by the caller when it places
+            // a comment directly above it, so don't emit a second line feed here.
+            if (!(index == 0 && suppressFirstLineFeed)) {
+                writer.writeLineFeed()
+            }
             writer.writeArrayOfTableHead(path)
             writer.writeLineFeed()
             // Emit value.
