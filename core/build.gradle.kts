@@ -11,13 +11,13 @@ import java.net.URI
 // Plugins
 
 plugins {
-    kotlin("multiplatform")
-    kotlin("plugin.serialization")
-    id("org.jetbrains.dokka")
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.dokka)
 
-    id("io.gitlab.arturbosch.detekt")
+    alias(libs.plugins.detekt)
 
-    id("com.vanniktech.maven.publish")
+    alias(libs.plugins.maven.publish)
 }
 
 // Archives Metadata
@@ -55,9 +55,6 @@ kotlin {
     }
 
     sourceSets {
-        val serializationVersion: String by rootProject
-        val datetimeVersion: String by rootProject
-
         applyDefaultHierarchyTemplate()
 
         all {
@@ -75,7 +72,7 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-serialization-core:$serializationVersion")
+                api(libs.kotlinx.serialization.core)
             }
         }
 
@@ -89,9 +86,9 @@ kotlin {
         val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test-junit5"))
-                implementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
+                implementation(libs.junit.jupiter.api)
 
-                runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.0")
+                runtimeOnly(libs.junit.jupiter.engine)
             }
         }
 
@@ -99,7 +96,7 @@ kotlin {
             dependsOn(commonMain)
 
             dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-datetime:$datetimeVersion")
+                api(libs.kotlinx.datetime)
             }
         }
 
