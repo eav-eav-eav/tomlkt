@@ -417,4 +417,45 @@ class ArrayOfTableTest {
     fun decodeEmptyCollectionLikeWithMapLikeElementUnsorted() {
         testDecode(M6.serializer(), s65, m63)
     }
+
+    @Serializable
+    data class NestedArrayRoot(
+        val hooks: HookConfiguration
+    )
+
+    @Serializable
+    data class HookConfiguration(
+        val stop: List<StopHook>
+    )
+
+    @Serializable
+    data class StopHook(
+        val hooks: List<CommandHook>
+    )
+
+    @Serializable
+    data class CommandHook(
+        val command: String
+    )
+
+    @Test
+    fun decodeNestedArrayOfTablesWithRepeatedPathSegment() {
+        val source = """
+            [[hooks.stop]]
+
+            [[hooks.stop.hooks]]
+            command = "notify"
+        """.trimIndent()
+        val expected = NestedArrayRoot(
+            hooks = HookConfiguration(
+                stop = listOf(
+                    StopHook(
+                        hooks = listOf(CommandHook(command = "notify"))
+                    )
+                )
+            )
+        )
+
+        testDecode(NestedArrayRoot.serializer(), source, expected)
+    }
 }

@@ -185,7 +185,7 @@ internal class TomlElementParser(
                     } else {
                         val iterator = arrayOfTableIndices.keys.iterator()
                         for (key in iterator) {
-                            if (key != path && key.containsAll(path)) {
+                            if (key.size > path.size && key.subList(0, path.size) == path) {
                                 iterator.remove()
                             }
                         }
