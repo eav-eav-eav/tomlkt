@@ -419,43 +419,66 @@ class ArrayOfTableTest {
     }
 
     @Serializable
-    data class NestedArrayRoot(
-        val hooks: HookConfiguration
+    data class M7(
+        val cs: List<C3>
     )
 
     @Serializable
-    data class HookConfiguration(
-        val stop: List<StopHook>
+    data class C3(
+        val cs: List<C1>
     )
 
-    @Serializable
-    data class StopHook(
-        val hooks: List<CommandHook>
-    )
-
-    @Serializable
-    data class CommandHook(
-        val command: String
-    )
-
-    @Test
-    fun decodeNestedArrayOfTablesWithRepeatedPathSegment() {
-        val source = """
-            [[hooks.stop]]
-
-            [[hooks.stop.hooks]]
-            command = "notify"
-        """.trimIndent()
-        val expected = NestedArrayRoot(
-            hooks = HookConfiguration(
-                stop = listOf(
-                    StopHook(
-                        hooks = listOf(CommandHook(command = "notify"))
+    val m71 = M7(
+        cs = listOf(
+            C3(
+                cs = listOf(
+                    C1(
+                        s = "😋"
                     )
                 )
             )
         )
+    )
 
-        testDecode(NestedArrayRoot.serializer(), source, expected)
+    val s71 = """
+        [[cs]]
+
+        [[cs.cs]]
+        s = "😋"
+    """.trimIndent()
+
+    @Test
+    fun decodeNestedArrayOfTablesWithSamePathSegments1() {
+        testDecode(M7.serializer(), s71, m71)
+    }
+
+    val m72 = M7(
+        cs = listOf(
+            C3(
+                cs = listOf(
+                    C1(
+                        s = "a"
+                    )
+                )
+            ),
+            C3(
+                cs = emptyList()
+            )
+        )
+    )
+
+    val s72 = """
+        [[cs]]
+
+        [[cs.cs]]
+        s = "a"
+        
+        [[cs]]
+        cs = [  ]
+    """.trimIndent()
+
+    @Test
+    fun decodeNestedArrayOfTablesWithSamePathSegments2() {
+        testDecode(M7.serializer(), s72, m72)
     }
 }
