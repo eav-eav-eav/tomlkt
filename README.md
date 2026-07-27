@@ -19,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.eav.tomlkt:tomlkt:0.6.0")
+    implementation("dev.eav.tomlkt:tomlkt:0.6.1")
 }
 ```
 </details>
@@ -33,7 +33,7 @@ repositories {
 }
 
 dependencies {
-    implementation "dev.eav.tomlkt:tomlkt:0.6.0"
+    implementation "dev.eav.tomlkt:tomlkt:0.6.1"
 }
 ```
 </details>
@@ -45,7 +45,7 @@ dependencies {
 <dependency>
   <groupId>dev.eav.tomlkt</groupId>
   <artifactId>tomlkt-jvm</artifactId>
-  <version>0.6.0</version>
+  <version>0.6.1</version>
 </dependency>
 ```
 </details>
