@@ -1,4 +1,5 @@
 @file:OptIn(ExperimentalWasmDsl::class)
+@file:Suppress("unused")
 
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
@@ -36,14 +37,13 @@ kotlin {
         }
     }
 
-    js(IR) {
+    js {
         browser()
         nodejs()
     }
 
     mingwX64()
     macosArm64()
-    macosX64()
     iosX64()
     iosArm64()
     iosSimulatorArm64()
@@ -118,10 +118,6 @@ kotlin {
         }
 
         val macosArm64Main by getting {
-            dependsOn(kotlinxMain)
-        }
-
-        val macosX64Main by getting {
             dependsOn(kotlinxMain)
         }
 
