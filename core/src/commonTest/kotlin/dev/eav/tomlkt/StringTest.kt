@@ -2,6 +2,7 @@ package dev.eav.tomlkt
 
 import kotlinx.serialization.Serializable
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class StringTest {
     @Serializable
@@ -61,6 +62,19 @@ class StringTest {
     @Test
     fun decodePopularEscapedChars() {
         testDecode(M1.serializer(), s13, m13)
+    }
+
+    @Test
+    fun encodeControlCharsAsHexEscapes() {
+        val value = M1(s = "\u0000\u000b\u0010\u001f\u007f")
+        testEncode(M1.serializer(), value, "s = \"\\u0000\\u000b\\u0010\\u001f\\u007f\"")
+    }
+
+    @Test
+    fun controlCharsRoundTrip() {
+        val value = M1(s = (0x00..0x1f).map { it.toChar() }.joinToString("") + "\u007f")
+        val encoded = Toml.encodeToString(M1.serializer(), value)
+        assertEquals(value, Toml.decodeFromString(M1.serializer(), encoded))
     }
 
     val m14 = M1(

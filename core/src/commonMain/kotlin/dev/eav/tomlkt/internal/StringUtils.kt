@@ -59,15 +59,13 @@ internal const val DefiniteNumberConstraints: String = "." + "acdef" + "ABCDEF" 
 internal val BareKeyRegex: Regex = Regex("[A-Za-z0-9_-]+")
 
 internal val AsciiMapping: List<String> = buildList(128) {
-    for (i in 0x00..0x0f) {
-        add(i, "\\u000$i")
+    for (i in 0x00..0x1f) {
+        add(i, "\\u00" + i.toString(16).padStart(2, '0'))
     }
-    for (i in 0x10..0x1f) {
-        add(i, "\\u00$i")
-    }
-    for (i in 0x20..0x7f) {
+    for (i in 0x20..0x7e) {
         add(i, i.toChar().toString())
     }
+    add(0x7f, "\\u007f")
     set('\b'.code, "\\b")
     set('\t'.code, "\\t")
     set('\n'.code, "\\n")
